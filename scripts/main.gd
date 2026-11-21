@@ -24,10 +24,17 @@ var elapsed := 0.0
 var touch_down := Vector2.ZERO
 var moved := false
 var dragging := false
+var ui_top: PanelContainer
+var ui_side: PanelContainer
+var ui_bottom: PanelContainer
+var ui_grid: GridContainer
+var map_area := Rect2()
 
 func _ready() -> void:
     load_game()
     make_ui()
+    get_viewport().size_changed.connect(layout_ui)
+    layout_ui()
     update_ui()
     queue_redraw()
 
@@ -52,7 +59,8 @@ func count_type(kind: String) -> int:
 func make_button(parent: Node, title: String, action: Callable) -> void:
     var b := Button.new()
     b.text = title
-    b.custom_minimum_size = Vector2(170, 42)
+    b.custom_minimum_size = Vector2(140, 72)
+    b.add_theme_font_size_override("font_size", 20)
     b.pressed.connect(action)
     parent.add_child(b)
 
@@ -60,6 +68,7 @@ func make_ui() -> void:
     var layer := CanvasLayer.new()
     add_child(layer)
     var top := PanelContainer.new()
+    ui_top = top
     top.position = Vector2(10, 10)
     top.size = Vector2(1260, 74)
     layer.add_child(top)
@@ -79,12 +88,14 @@ func make_ui() -> void:
     make_button(bar, "Sauver", save_game)
     make_button(bar, "Recentrer", recenter)
     var panel := PanelContainer.new()
+    ui_side = panel
     panel.position = Vector2(10, 95)
     panel.size = Vector2(210, 545)
     layer.add_child(panel)
     var scroll := ScrollContainer.new()
     panel.add_child(scroll)
-    var buttons := VBoxContainer.new()
+    var buttons := GridContainer.new()
+    ui_grid = buttons
     scroll.add_child(buttons)
     for key in BUILDINGS:
         var kind: String = key
@@ -96,11 +107,34 @@ func make_ui() -> void:
         var species: String = key
         make_button(buttons, "%s (%d)" % [SPECIES[species]["name"], SPECIES[species]["cost"]], func(): choose_animal(species))
     var bottom := PanelContainer.new()
+    ui_bottom = bottom
     bottom.position = Vector2(10, 650)
     bottom.size = Vector2(1260, 58)
     layer.add_child(bottom)
     label_status = Label.new()
     bottom.add_child(label_status)
+
+func layout_ui() -> void:
+    var v := get_viewport_rect().size
+    if v.x < 50 or v.y < 50:
+        return
+    ui_top.position = Vector2(8, 8)
+    ui_top.size = Vector2(v.x - 16, 90)
+    ui_bottom.position = Vector2(8, v.y - 65)
+    ui_bottom.size = Vector2(v.x - 16, 57)
+    if v.y >= v.x:
+        var h := clampf(v.y * 0.23, 180, 340)
+        ui_side.position = Vector2(8, v.y - h - 74)
+        ui_side.size = Vector2(v.x - 16, h)
+        ui_grid.columns = maxi(2, int((v.x - 24) / 155))
+        map_area = Rect2(8, 108, v.x - 16, v.y - h - 192)
+    else:
+        var w := clampf(v.x * 0.25, 220, 380)
+        ui_side.position = Vector2(8, 108)
+        ui_side.size = Vector2(w, v.y - 181)
+        ui_grid.columns = 2
+        map_area = Rect2(w + 18, 108, v.x - w - 26, v.y - 181)
+    recenter()
 
 func update_ui() -> void:
     if label_coins == null:
@@ -133,10 +167,12 @@ func earn() -> void:
     update_ui()
 
 func recenter() -> void:
-    origin = Vector2(625, 170)
+    origin = map_area.get_center() - Vector2(0, SECTOR * H * scale_factor / 2.0)
     queue_redraw()
 
 func _draw() -> void:
+    draw_rect(Rect2(Vector2.ZERO, get_viewport_rect().size), Color(0.07, 0.13, 0.15))
+    draw_rect(map_area, Color(0.12, 0.24, 0.20))
     for parcel in parcels:
         for x in range(SECTOR):
             for y in range(SECTOR):
@@ -204,6 +240,8 @@ func _unhandled_input(event: InputEvent) -> void:
             queue_redraw()
 
 func act_on(pos: Vector2) -> void:
+    if not map_area.has_point(pos):
+        return
     var cell := cell_at(pos)
     var key := str(cell.x) + "," + str(cell.y)
     if tool == "expand":
