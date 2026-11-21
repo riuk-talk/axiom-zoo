@@ -91,6 +91,28 @@ jobs:
           test -x "$ANDROID_HOME/build-tools/34.0.0/zipalign"
           test -f "$HOME/.android/debug.keystore"
           keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey >/dev/null
+      - name: Diagnose Android export preset directly
+        run: |
+          set -eu
+          cat > /tmp/axiom_export_diagnostic.gd <<'GDSCRIPT'
+          extends SceneTree
+
+          func _initialize() -> void:
+              print("=== GODOT EXPORT PRESET VALIDATION ===")
+              print("Export platform count: ", EditorExport.get_export_platform_count())
+              print("Export preset count: ", EditorExport.get_export_preset_count())
+              for i in range(EditorExport.get_export_preset_count()):
+                  var preset = EditorExport.get_export_preset(i)
+                  var platform = preset.get_platform()
+                  var errors = [""]
+                  var missing_templates = [false]
+                  var ok = platform.can_export(preset, errors, missing_templates)
+                  print("PRESET: ", preset.get_name(), " PLATFORM: ", platform.get_name())
+                  print("CAN_EXPORT: ", ok, " MISSING_TEMPLATES: ", missing_templates[0])
+                  print("ERROR_DETAILS: ", errors[0])
+              quit()
+          GDSCRIPT
+          godot --headless --editor --path . --script /tmp/axiom_export_diagnostic.gd
       - name: Export Android debug APK
         env:
           GODOT_ANDROID_KEYSTORE_DEBUG_PATH: /github/home/.android/debug.keystore
