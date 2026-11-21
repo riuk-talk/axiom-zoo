@@ -31,10 +31,12 @@ jobs:
         run: |
           set -eu
           yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses >/dev/null || true
-          sdkmanager --sdk_root="$ANDROID_HOME" "platform-tools" "build-tools;34.0.0" "platforms;android-34" "cmdline-tools;latest"
+          sdkmanager --sdk_root="$ANDROID_HOME" "platform-tools" "build-tools;34.0.0" "platforms;android-34" "cmdline-tools;latest" "cmake;3.10.2.4988404" "ndk;23.2.8568313"
           test -f "$ANDROID_HOME/platforms/android-34/android.jar"
           test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           test -x "$ANDROID_HOME/build-tools/34.0.0/aapt2"
+          test -d "$ANDROID_HOME/ndk/23.2.8568313"
+          test -d "$ANDROID_HOME/cmake/3.10.2.4988404"
       - name: Install matching Godot Android export templates
         run: |
           set -eu
@@ -84,6 +86,11 @@ jobs:
           test -f scenes/main.tscn
           test -f scripts/main.gd
           godot --headless --path . --editor --quit
+          echo "=== Android SDK signing and packaging checks ==="
+          test -x "$ANDROID_HOME/build-tools/34.0.0/apksigner"
+          test -x "$ANDROID_HOME/build-tools/34.0.0/zipalign"
+          test -f "$HOME/.android/debug.keystore"
+          keytool -list -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey >/dev/null
       - name: Export Android debug APK
         env:
           GODOT_ANDROID_KEYSTORE_DEBUG_PATH: /github/home/.android/debug.keystore
