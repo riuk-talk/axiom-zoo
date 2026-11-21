@@ -1,5 +1,5 @@
 name: Build AXIOM Zoo Android APK
-# New run on current project revision
+# Android build on current main; include actionable diagnostics
 
 on:
   workflow_dispatch:
@@ -19,16 +19,24 @@ jobs:
       image: barichello/godot-ci:4.4.1
     steps:
       - uses: actions/checkout@v4
-      - name: Check Godot project
+      - name: Check Godot project and environment
         run: |
+          set -eu
+          pwd
+          ls -la
+          godot --version
           test -f project.godot
           test -f export_presets.cfg
+          test -f scenes/main.tscn
+          test -f scripts/main.gd
           godot --headless --path . --editor --quit
       - name: Export Android debug APK
         run: |
+          set -eu
           mkdir -p build
           godot --headless --path . --export-debug "Android" build/AXIOM-Zoo-debug.apk
           test -s build/AXIOM-Zoo-debug.apk
+          ls -lh build/AXIOM-Zoo-debug.apk
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
