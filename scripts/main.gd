@@ -21,6 +21,9 @@ var label_status: Label
 var label_summary: Label
 var status := "Bienvenue dans AXIOM Zoo !"
 var elapsed := 0.0
+var world_clock := 0.0
+var visitors := 0
+var reputation := 50
 var touch_down := Vector2.ZERO
 var moved := false
 var dragging := false
@@ -32,6 +35,8 @@ var map_area := Rect2()
 
 func _ready() -> void:
     load_game()
+    if tiles.is_empty():
+        setup_starting_zoo()
     make_ui()
     get_viewport().size_changed.connect(layout_ui)
     layout_ui()
@@ -39,10 +44,15 @@ func _ready() -> void:
     queue_redraw()
 
 func _process(delta: float) -> void:
+    world_clock += delta
+    if int(world_clock * 3.0) != int((world_clock - delta) * 3.0):
+        queue_redraw()
     elapsed += delta
     if elapsed >= 10.0:
         elapsed = 0.0
-        var gain := animals.size() * 2 + count_type("shop") * 3
+        visitors = mini(200, 8 + animals.size() * 12 + count_type("path") * 2 + count_type("tree") * 3)
+        reputation = mini(100, 40 + animals.size() * 8 + count_type("tree") * 2)
+        var gain := animals.size() * 2 + count_type("shop") * 3 + visitors / 10
         if gain > 0:
             coins += gain
             status = "+%d pièces de revenus." % gain
@@ -141,7 +151,7 @@ func update_ui() -> void:
         return
     label_coins.text = "  Pièces : %d  " % coins
     label_summary.text = "  Animaux : %d | Boutiques : %d | Parcelles : %d" % [animals.size(), count_type("shop"), parcels.size()]
-    label_status.text = "  %s | Outil : %s" % [status, tool]
+    label_status.text = "  %s | %s" % [status, current_mission()]
 
 func choose_build(kind: String) -> void:
     choice = kind
@@ -206,6 +216,29 @@ func _draw() -> void:
                     if animals.has(key):
                         letter = str(SPECIES.get(str(animals[key]), {"symbol": "?"})["symbol"])
                     draw_string(font, p + Vector2(-5, 5), letter, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color.WHITE)
+
+func current_mission() -> String:
+    if animals.size() < 2:
+        return "Objectif : 2 animaux"
+    if count_type("tree") < 4:
+        return "Objectif : 4 arbres"
+    if count_type("shop") < 1:
+        return "Objectif : 1 boutique"
+    if animals.size() < 5:
+        return "Objectif : 5 animaux"
+    return "Développe ton zoo !"
+
+func setup_starting_zoo() -> void:
+    for x in range(4, 8):
+        tiles["%d,6" % x] = "path"
+    tiles["4,4"] = "tree"
+    tiles["7,7"] = "tree"
+    tiles["4,7"] = "water"
+    tiles["7,4"] = "habitat"
+    animals["7,4"] = "zebra"
+    coins = 2200
+    status = "Bienvenue ! Ton premier zèbre t’attend."
+    save_game()
 
 func tile_position(cell: Vector2i) -> Vector2:
     return origin + Vector2((cell.x - cell.y) * W * scale_factor / 2.0, (cell.x + cell.y) * H * scale_factor / 2.0)
@@ -321,7 +354,7 @@ func save_game() -> void:
     var parcel_data: Array = []
     for p in parcels:
         parcel_data.append([p.x, p.y])
-    var payload := {"coins": coins, "tiles": tiles, "animals": animals, "parcels": parcel_data, "saved_at": int(Time.get_unix_time_from_system())}
+    var payload := {"visitors": visitors, "reputation": reputation, "coins": coins, "tiles": tiles, "animals": animals, "parcels": parcel_data, "saved_at": int(Time.get_unix_time_from_system())}
     var f := FileAccess.open(SAVE, FileAccess.WRITE)
     if f != null:
         f.store_string(JSON.stringify(payload))
@@ -336,6 +369,8 @@ func load_game() -> void:
     if not (data is Dictionary):
         return
     coins = int(data.get("coins", data.get("money", 2500)))
+    visitors = int(data.get("visitors", 0))
+    reputation = int(data.get("reputation", 50))
     tiles = data.get("tiles", data.get("placed", {}))
     animals = data.get("animals", {})
     var saved_parcels: Array = data.get("parcels", [])
