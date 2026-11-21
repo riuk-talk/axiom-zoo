@@ -1,0 +1,36 @@
+name: Build AXIOM Zoo Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'project.godot'
+      - 'export_presets.cfg'
+      - 'scenes/**'
+      - 'scripts/**'
+      - '.github/workflows/android-apk.yml'
+
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    container:
+      image: barichello/godot-ci:4.4.1
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Godot project
+        run: |
+          test -f project.godot
+          test -f export_presets.cfg
+          godot --headless --path . --editor --quit
+      - name: Export Android debug APK
+        run: |
+          mkdir -p build
+          godot --headless --path . --export-debug "Android" build/AXIOM-Zoo-debug.apk
+          test -s build/AXIOM-Zoo-debug.apk
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: AXIOM-Zoo-Android-debug
+          path: build/AXIOM-Zoo-debug.apk
+          if-no-files-found: error
