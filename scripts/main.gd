@@ -150,7 +150,7 @@ func update_ui() -> void:
     if label_coins == null:
         return
     label_coins.text = "  Pièces : %d  " % coins
-    label_summary.text = "  Animaux : %d | Boutiques : %d | Parcelles : %d" % [animals.size(), count_type("shop"), parcels.size()]
+    label_summary.text = "  Animaux : %d | Visiteurs : %d | Réputation : %d" % [animals.size(), visitors, reputation]
     label_status.text = "  %s | %s" % [status, current_mission()]
 
 func choose_build(kind: String) -> void:
@@ -210,7 +210,9 @@ func _draw() -> void:
                 elif kind == "habitat":
                     draw_arc(p, 11, 0, TAU, 20, Color(0.95, 0.78, 0.40), 3)
                 draw_polyline(PackedVector2Array([corners[0], corners[1], corners[2], corners[3], corners[0]]), Color(0.10, 0.22, 0.12), 1.0)
-                if kind != "":
+                if animals.has(key):
+                    draw_animal(p, str(animals[key]), float(cell.x * 17 + cell.y * 7))
+                if kind != "" and not animals.has(key) and kind not in ["tree", "water", "shop"]:
                     var font := ThemeDB.fallback_font
                     var letter := kind.substr(0, 1).to_upper()
                     if animals.has(key):
@@ -239,6 +241,30 @@ func setup_starting_zoo() -> void:
     coins = 2200
     status = "Bienvenue ! Ton premier zèbre t’attend."
     save_game()
+
+func draw_animal(p: Vector2, species: String, seed: float) -> void:
+    var bob := sin(world_clock * 2.0 + seed) * 2.0
+    var center := p + Vector2(0, -15 + bob)
+    var body := Color(0.94, 0.91, 0.80)
+    match species:
+        "zebra": body = Color(0.95, 0.96, 0.96)
+        "flamingo": body = Color(1.0, 0.49, 0.64)
+        "giraffe": body = Color(0.96, 0.70, 0.31)
+        "penguin": body = Color(0.16, 0.23, 0.30)
+    draw_circle(center + Vector2(0, 6), 11, Color(0.07, 0.14, 0.12, 0.25))
+    draw_circle(center, 10, body)
+    draw_circle(center + Vector2(5, -9), 6, body.lightened(0.12))
+    draw_circle(center + Vector2(7, -10), 1.7, Color(0.08, 0.09, 0.10))
+    if species == "zebra":
+        for n in range(3):
+            draw_line(center + Vector2(-6 + n * 5, -5), center + Vector2(-9 + n * 5, 6), Color(0.10, 0.12, 0.14), 2)
+    elif species == "giraffe":
+        draw_line(center + Vector2(5, -3), center + Vector2(5, -18), body, 5)
+        draw_circle(center + Vector2(-3, 1), 2.8, Color(0.60, 0.34, 0.14))
+    elif species == "penguin":
+        draw_circle(center + Vector2(1, 2), 5, Color(0.98, 0.96, 0.88))
+    elif species == "flamingo":
+        draw_line(center + Vector2(2, 5), center + Vector2(2, 16), Color(0.88, 0.36, 0.47), 2)
 
 func tile_position(cell: Vector2i) -> Vector2:
     return origin + Vector2((cell.x - cell.y) * W * scale_factor / 2.0, (cell.x + cell.y) * H * scale_factor / 2.0)
