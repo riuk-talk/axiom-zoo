@@ -19,6 +19,14 @@ jobs:
       image: barichello/godot-ci:4.4.1
     steps:
       - uses: actions/checkout@v4
+      - name: Install build prerequisites
+        run: |
+          set -eu
+          apt-get update
+          apt-get install -y --no-install-recommends python3 ca-certificates openjdk-17-jdk-headless
+          python3 --version
+          java -version
+          keytool -help >/dev/null
       - name: Install matching Godot Android export templates
         run: |
           set -eu
