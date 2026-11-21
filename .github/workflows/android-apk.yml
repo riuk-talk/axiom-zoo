@@ -57,12 +57,12 @@ jobs:
           mkdir -p "$HOME/.android" "$HOME/.config/godot"
           keytool -genkeypair -noprompt -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=AXIOM,C=FR"
           {
-            printf '[gd_resource type="EditorSettings" format=3]\\n\\n[resource]\\n'
-            printf 'export/android/java_sdk_path = "%s"\\n' "$JAVA_HOME"
-            printf 'export/android/android_sdk_path = "%s"\\n' "$ANDROID_HOME"
-            printf 'export/android/debug_keystore = "%s/.android/debug.keystore"\\n' "$HOME"
-            printf 'export/android/debug_keystore_user = "androiddebugkey"\\n'
-            printf 'export/android/debug_keystore_pass = "android"\\n'
+            printf '[gd_resource type="EditorSettings" format=3]\n\n[resource]\n'
+            printf 'export/android/java_sdk_path = "%s"\n' "$JAVA_HOME"
+            printf 'export/android/android_sdk_path = "%s"\n' "$ANDROID_HOME"
+            printf 'export/android/debug_keystore = "%s/.android/debug.keystore"\n' "$HOME"
+            printf 'export/android/debug_keystore_user = "androiddebugkey"\n'
+            printf 'export/android/debug_keystore_pass = "android"\n'
           } > "$HOME/.config/godot/editor_settings-4.4.tres"
           cat "$HOME/.config/godot/editor_settings-4.4.tres"
       - name: Check Godot project and environment
