@@ -27,6 +27,7 @@ var reputation := 50
 var touch_down := Vector2.ZERO
 var moved := false
 var dragging := false
+var ui_title: Label
 var ui_top: PanelContainer
 var ui_side: PanelContainer
 var ui_bottom: PanelContainer
@@ -86,6 +87,7 @@ func make_ui() -> void:
     top.add_child(bar)
     var title := Label.new()
     title.text = " AXIOM ZOO  "
+    ui_title = title
     bar.add_child(title)
     label_coins = Label.new()
     bar.add_child(label_coins)
@@ -130,20 +132,26 @@ func layout_ui() -> void:
         return
     ui_top.position = Vector2(8, 8)
     ui_top.size = Vector2(v.x - 16, 90)
+    ui_title.visible = v.x > 850
+    label_summary.visible = v.x > 1000
+    for child in ui_top.get_child(0).get_children():
+        if child is Button:
+            child.custom_minimum_size.x = 80 if v.x < 850 else 140
     ui_bottom.position = Vector2(8, v.y - 65)
-    ui_bottom.size = Vector2(v.x - 16, 57)
+    ui_bottom.size = Vector2(v.x - 16, 84)
+    ui_bottom.position.y = v.y - 92
     if v.y >= v.x:
         var h := clampf(v.y * 0.23, 180, 340)
-        ui_side.position = Vector2(8, v.y - h - 74)
+        ui_side.position = Vector2(8, v.y - h - 101)
         ui_side.size = Vector2(v.x - 16, h)
         ui_grid.columns = maxi(2, int((v.x - 24) / 155))
-        map_area = Rect2(8, 108, v.x - 16, v.y - h - 192)
+        map_area = Rect2(8, 108, v.x - 16, v.y - h - 219)
     else:
         var w := clampf(v.x * 0.25, 220, 380)
         ui_side.position = Vector2(8, 108)
-        ui_side.size = Vector2(w, v.y - 181)
+        ui_side.size = Vector2(w, v.y - 208)
         ui_grid.columns = 2
-        map_area = Rect2(w + 18, 108, v.x - w - 26, v.y - 181)
+        map_area = Rect2(w + 18, 108, v.x - w - 26, v.y - 208)
     recenter()
 
 func update_ui() -> void:
