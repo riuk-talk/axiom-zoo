@@ -189,6 +189,16 @@ func _draw() -> void:
                     "shop": tint = Color(0.35, 0.40, 0.75)
                     "water": tint = Color(0.20, 0.53, 0.82)
                 draw_colored_polygon(corners, tint)
+                if kind == "tree":
+                    draw_circle(p + Vector2(0, -12), 12, Color(0.09, 0.35, 0.17))
+                    draw_circle(p + Vector2(-5, -18), 9, Color(0.23, 0.58, 0.28))
+                elif kind == "water":
+                    draw_circle(p, 9, Color(0.52, 0.84, 0.96))
+                elif kind == "shop":
+                    draw_rect(Rect2(p + Vector2(-9, -20), Vector2(18, 19)), Color(0.91, 0.72, 0.43))
+                    draw_colored_polygon(PackedVector2Array([p + Vector2(-13, -20), p + Vector2(0, -32), p + Vector2(13, -20)]), Color(0.82, 0.30, 0.26))
+                elif kind == "habitat":
+                    draw_arc(p, 11, 0, TAU, 20, Color(0.95, 0.78, 0.40), 3)
                 draw_polyline(PackedVector2Array([corners[0], corners[1], corners[2], corners[3], corners[0]]), Color(0.10, 0.22, 0.12), 1.0)
                 if kind != "":
                     var font := ThemeDB.fallback_font
