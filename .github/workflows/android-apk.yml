@@ -84,7 +84,12 @@ jobs:
         run: |
           set -eu
           mkdir -p build
-          godot --headless --path . --export-debug "Android" build/AXIOM-Zoo-debug.apk
+          echo "=== Android SDK installed components ==="
+          ls -la "$ANDROID_HOME/build-tools" "$ANDROID_HOME/platforms" || true
+          echo "=== Java and SDK paths ==="
+          echo "JAVA_HOME=$JAVA_HOME ANDROID_HOME=$ANDROID_HOME"
+          echo "=== Godot export detailed diagnostics ==="
+          godot --verbose --headless --path . --export-debug "Android" build/AXIOM-Zoo-debug.apk
           test -s build/AXIOM-Zoo-debug.apk
           ls -lh build/AXIOM-Zoo-debug.apk
       - name: Upload APK
