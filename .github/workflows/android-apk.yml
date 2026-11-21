@@ -12,6 +12,9 @@ on:
       - 'scripts/**'
       - '.github/workflows/android-apk.yml'
 
+permissions:
+  contents: write
+
 jobs:
   android:
     runs-on: ubuntu-latest
@@ -127,3 +130,15 @@ jobs:
           name: AXIOM-Zoo-Android-debug
           path: build/AXIOM-Zoo-debug.apk
           if-no-files-found: error
+
+      - name: Publish APK to permanent download page
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: mobile-latest
+          name: AXIOM Zoo — dernière APK Android
+          body: "Version Android de test, générée automatiquement depuis la branche main. Télécharger AXIOM-Zoo-debug.apk ci-dessous."
+          prerelease: true
+          make_latest: false
+          files: build/AXIOM-Zoo-debug.apk
+          fail_on_unmatched_files: true
+          overwrite_files: true
