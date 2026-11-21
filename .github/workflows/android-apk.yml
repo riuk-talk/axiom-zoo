@@ -19,6 +19,40 @@ jobs:
       image: barichello/godot-ci:4.4.1
     steps:
       - uses: actions/checkout@v4
+      - name: Install matching Godot Android export templates
+        run: |
+          set -eu
+          mkdir -p /tmp/axiom-templates
+          curl -fL --retry 3 -o /tmp/axiom-templates/templates.tpz "https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz"
+          python3 - <<'PY'
+          import zipfile, os, shutil
+          src = "/tmp/axiom-templates/templates.tpz"
+          dest = os.path.expanduser("~/.local/share/godot/export_templates/4.4.1.stable")
+          os.makedirs(dest, exist_ok=True)
+          with zipfile.ZipFile(src) as z:
+              for name in ("android_debug.apk", "android_release.apk", "version.txt"):
+                  candidate = "templates/" + name
+                  if candidate in z.namelist():
+                      with z.open(candidate) as r, open(os.path.join(dest, name), "wb") as w:
+                          shutil.copyfileobj(r, w)
+          print("Templates:", os.listdir(dest))
+          PY
+      - name: Configure Android Java SDK and debug signing
+        run: |
+          set -eu
+          export JAVA_HOME="$(dirname "$(dirname "$(readlink -f "$(command -v javac)")")")"
+          echo "JAVA_HOME=$JAVA_HOME" >> "$GITHUB_ENV"
+          mkdir -p "$HOME/.android" "$HOME/.config/godot"
+          keytool -genkeypair -noprompt -v -keystore "$HOME/.android/debug.keystore" -storepass android -alias androiddebugkey -keypass android -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=AXIOM,C=FR"
+          {
+            printf '[gd_resource type="EditorSettings" format=3]\\n\\n[resource]\\n'
+            printf 'export/android/java_sdk_path = "%s"\\n' "$JAVA_HOME"
+            printf 'export/android/android_sdk_path = "%s"\\n' "$ANDROID_HOME"
+            printf 'export/android/debug_keystore = "%s/.android/debug.keystore"\\n' "$HOME"
+            printf 'export/android/debug_keystore_user = "androiddebugkey"\\n'
+            printf 'export/android/debug_keystore_pass = "android"\\n'
+          } > "$HOME/.config/godot/editor_settings-4.4.tres"
+          cat "$HOME/.config/godot/editor_settings-4.4.tres"
       - name: Check Godot project and environment
         run: |
           set -eu
@@ -31,6 +65,10 @@ jobs:
           test -f scripts/main.gd
           godot --headless --path . --editor --quit
       - name: Export Android debug APK
+        env:
+          GODOT_ANDROID_KEYSTORE_DEBUG_PATH: /github/home/.android/debug.keystore
+          GODOT_ANDROID_KEYSTORE_DEBUG_USER: androiddebugkey
+          GODOT_ANDROID_KEYSTORE_DEBUG_PASSWORD: android
         run: |
           set -eu
           mkdir -p build
