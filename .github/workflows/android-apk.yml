@@ -23,7 +23,11 @@ jobs:
         run: |
           set -eu
           mkdir -p /tmp/axiom-templates
-          curl -fL --retry 3 -o /tmp/axiom-templates/templates.tpz "https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz"
+          python3 - <<'PY'
+          import urllib.request
+          url = "https://github.com/godotengine/godot/releases/download/4.4.1-stable/Godot_v4.4.1-stable_export_templates.tpz"
+          urllib.request.urlretrieve(url, "/tmp/axiom-templates/templates.tpz")
+          PY
           python3 - <<'PY'
           import zipfile, os, shutil
           src = "/tmp/axiom-templates/templates.tpz"
