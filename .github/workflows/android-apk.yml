@@ -31,8 +31,9 @@ jobs:
         run: |
           set -eu
           yes | sdkmanager --sdk_root="$ANDROID_HOME" --licenses >/dev/null || true
-          sdkmanager --sdk_root="$ANDROID_HOME" "platform-tools" "build-tools;34.0.0" "platforms;android-34"
+          sdkmanager --sdk_root="$ANDROID_HOME" "platform-tools" "build-tools;34.0.0" "platforms;android-34" "cmdline-tools;latest"
           test -f "$ANDROID_HOME/platforms/android-34/android.jar"
+          test -x "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
           test -x "$ANDROID_HOME/build-tools/34.0.0/aapt2"
       - name: Install matching Godot Android export templates
         run: |
@@ -92,7 +93,7 @@ jobs:
           set -eu
           mkdir -p build
           echo "=== Android SDK installed components ==="
-          ls -la "$ANDROID_HOME/build-tools" "$ANDROID_HOME/platforms" || true
+          ls -la "$ANDROID_HOME/build-tools" "$ANDROID_HOME/platforms" "$ANDROID_HOME/platform-tools" "$ANDROID_HOME/cmdline-tools" || true
           echo "=== Java and SDK paths ==="
           echo "JAVA_HOME=$JAVA_HOME ANDROID_HOME=$ANDROID_HOME"
           echo "=== Godot export detailed diagnostics ==="
